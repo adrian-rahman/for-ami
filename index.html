@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Just for You ✨</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500;600;700&family=Open+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /* Quiz Page Styles */
+    .quiz-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, #fdf2f8 0%, #fce7f3 50%, #fbcfe8 100%);
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.8s ease;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    
+    .quiz-container.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+    
+    .quiz-card {
+      background: rgba(255, 255, 255, 0.7);
+      backdrop-filter: blur(10px);
+      border-radius: 2rem;
+      padding: 2.5rem;
+      max-width: 600px;
+      width: 100%;
+      box-shadow: 0 25px 50px -12px rgba(236, 72, 153, 0.25);
+      border: 2px solid rgba(255, 255, 255, 0.5);
+      transform: scale(1);
+      animation: quizPop 0.5s ease;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    
+    @keyframes quizPop {
+      0% { transform: scale(0.9); opacity: 0; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    
+    .quiz-title {
+      font-family: 'Dancing Script', cursive;
+      font-size: 2.5rem;
+      color: #be185d;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    
+    .quiz-subtitle {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 500;
+      color: #831843;
+      text-align: center;
+      margin-bottom: 2rem;
+      font-size: 1rem;
+    }
+    
+    .question-container {
+      margin-bottom: 2rem;
+      background: rgba(255, 255, 255, 0.5);
+      border-radius: 1.5rem;
+      padding: 1.5rem;
+    }
+    
+    .question-text {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: #831843;
+      margin-bottom: 1rem;
+    }
+    
+    .options-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+    }
+    
+    .quiz-option {
+      background: white;
+      border: 2px solid #f9a8d4;
+      border-radius: 1rem;
+      padding: 0.75rem 1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 500;
+      color: #4b5563;
+      text-align: center;
+      font-size: 0.95rem;
+    }
+    
+    .quiz-option:hover {
+      background: #fdf2f8;
+      border-color: #ec4899;
+      transform: scale(1.02);
+      box-shadow: 0 10px 25px -5px rgba(236, 72, 153, 0.3);
+    }
+    
+    .quiz-option.selected {
+      background: #ec4899;
+      border-color: #be185d;
+      color: white;
+      box-shadow: 0 10px 25px -5px rgba(236, 72, 153, 0.5);
+    }
+    
+    .quiz-option.correct {
+      background: #10b981;
+      border-color: #059669;
+      color: white;
+    }
+    
+    .quiz-option.wrong {
+      background: #ef4444;
+      border-color: #dc2626;
+      color: white;
+    }
+    
+    .quiz-btn {
+      background: linear-gradient(135deg, #ec4899, #db2777);
+      color: white;
+      border: none;
+      border-radius: 9999px;
+      padding: 1rem 2rem;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 100%;
+      margin-top: 1rem;
+      box-shadow: 0 10px 25px -5px rgba(236, 72, 153, 0.5);
+    }
+    
+    .quiz-btn:hover:not(:disabled) {
+      transform: scale(1.05);
+      box-shadow: 0 15px 30px -5px rgba(236, 72, 153, 0.7);
+    }
+    
+    .quiz-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    
+    .quiz-error {
+      color: #be123c;
+      font-family: 'Open Sans', sans-serif;
+      font-size: 0.9rem;
+      margin-top: 1rem;
+      text-align: center;
+      min-height: 1.5rem;
+    }
+    
+    .quiz-success {
+      text-align: center;
+      color: #059669;
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+      margin-top: 1rem;
+    }
+    
+    .progress-indicator {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    
+    .progress-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: #f9a8d4;
+      transition: all 0.3s ease;
+    }
+    
+    .progress-dot.completed {
+      background: #10b981;
+      transform: scale(1.2);
+    }
+    
+    .progress-dot.active {
+      background: #ec4899;
+      transform: scale(1.2);
+      box-shadow: 0 0 10px #ec4899;
+    }
+    
+    .floating-fun-btn {
+      position: fixed;
+      bottom: 100px;
+      right: 30px;
+      z-index: 1000;
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #ec4899, #f472b6, #fbb6ce);
+      color: white;
+      border: none;
+      box-shadow: 0 8px 25px rgba(236, 72, 153, 0.4);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 28px;
+      transition: all 0.3s ease;
+      animation: pulse 2s infinite;
+    }
+
+    .floating-fun-btn:hover {
+      transform: scale(1.1) rotate(15deg);
+      box-shadow: 0 12px 30px rgba(236, 72, 153, 0.6);
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+      100% { transform: scale(1); }
+    }
+
+    .floating-text {
+      position: fixed;
+      bottom: 175px;
+      right: 25px;
+      z-index: 1000;
+      background: white;
+      padding: 5px 10px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #ec4899;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+    }
+
+    .floating-fun-btn:hover + .floating-text {
+      opacity: 1;
+    }
+    
+    body {
+      font-family: 'Poppins', sans-serif;
+      overflow-x: hidden;
+    }
+    
+    h1, h2 {
+      font-family: 'Dancing Script', cursive;
+    }
+    
+    .readable-font {
+      font-family: 'Montserrat', sans-serif;
+      font-weight: 600;
+    }
+    
+    .readable-text {
+      font-family: 'Open Sans', sans-serif;
+      font-weight: 500;
+    }
+    
+    .fade {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 1s ease-out;
+    }
+    
+    .fade.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .hearts-container {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+      overflow: hidden;
+    }
+    
+    .heart {
+      position: absolute;
+      bottom: -10vh;
+      font-size: 1.5rem;
+      opacity: 0.6;
+      animation: float 10s linear infinite;
+    }
+    
+    @keyframes float {
+      0% { transform: translateY(0) rotate(0deg); opacity: 0.8; }
+      100% { transform: translateY(-110vh) rotate(360deg); opacity: 0; }
+    }
+
+    .time-box {
+      background: rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(4px);
+      border-radius: 1rem;
+      padding: 0.75rem 1rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-width: 65px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+    
+    .time-number {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #e11d48;
+    }
+    
+    .time-label {
+      font-size: 0.75rem;
+      color: #6b7280;
+      margin-top: 0.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+  </style>
+</head>
+
+<body>
+  <!-- QUIZ GATEWAY - appears first -->
+  <div id="quizContainer" class="quiz-container">
+    <div class="quiz-card">
+      <h1 class="quiz-title">Hai Amii! 🌸</h1>
+      <div class="quiz-subtitle">Sebelum masuk, jawab 3 pertanyaan dulu yaa~</div>
+      
+      <!-- Progress Indicator -->
+      <div class="progress-indicator" id="progressIndicator">
+        <div class="progress-dot active" id="progress1"></div>
+        <div class="progress-dot" id="progress2"></div>
+        <div class="progress-dot" id="progress3"></div>
+      </div>
+      
+      <!-- Question 1 -->
+      <div id="question1" class="question-container">
+        <div class="question-text">1. Nama kamu siapa?</div>
+        <div class="options-grid">
+          <div class="quiz-option" onclick="window.selectAnswer(1, 'A')" id="q1A">A. Amo</div>
+          <div class="quiz-option" onclick="window.selectAnswer(1, 'B')" id="q1B">B. Ameng</div>
+          <div class="quiz-option" onclick="window.selectAnswer(1, 'C')" id="q1C">C. Ami</div>
+          <div class="quiz-option" onclick="window.selectAnswer(1, 'D')" id="q1D">D. Amuy</div>
+        </div>
+      </div>
+      
+      <!-- Question 2 (hidden initially) -->
+      <div id="question2" class="question-container" style="display: none;">
+        <div class="question-text">2. Kita pertama ketemu di?</div>
+        <div class="options-grid">
+          <div class="quiz-option" onclick="window.selectAnswer(2, 'A')" id="q2A">A. Matek</div>
+          <div class="quiz-option" onclick="window.selectAnswer(2, 'B')" id="q2B">B. Perpus UI</div>
+          <div class="quiz-option" onclick="window.selectAnswer(2, 'C')" id="q2C">C. Dallas</div>
+          <div class="quiz-option" onclick="window.selectAnswer(2, 'D')" id="q2D">D. D-Mall</div>
+        </div>
+      </div>
+      
+      <!-- Question 3 (hidden initially) -->
+      <div id="question3" class="question-container" style="display: none;">
+        <div class="question-text">3. Kapan kita ketemu pertama?</div>
+        <div class="options-grid">
+          <div class="quiz-option" onclick="window.selectAnswer(3, 'A')" id="q3A">A. 30 November</div>
+          <div class="quiz-option" onclick="window.selectAnswer(3, 'B')" id="q3B">B. 25 November</div>
+          <div class="quiz-option" onclick="window.selectAnswer(3, 'C')" id="q3C">C. 19 November</div>
+          <div class="quiz-option" onclick="window.selectAnswer(3, 'D')" id="q3D">D. 20 November</div>
+        </div>
+      </div>
+      
+      <!-- Navigation Buttons -->
+      <div class="flex gap-3">
+        <button class="quiz-btn" id="prevBtn" onclick="window.prevQuestion()" style="display: none; width: auto; padding: 0.75rem 1.5rem;">← Prev</button>
+        <button class="quiz-btn" id="nextBtn" onclick="window.nextQuestion()" disabled>Next</button>
+      </div>
+      
+      <div id="quizError" class="quiz-error"></div>
+      <div id="quizSuccess" class="quiz-success"></div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT (hidden until quiz is passed) -->
+  <div id="mainContent" style="display: none;">
+    <div class="hearts-container" id="hearts-bg"></div>
+
+    <!-- Bagian 1: Hai Amii -->
+    <section class="min-h-screen flex flex-col items-center justify-center text-center px-6 relative z-10">
+      <h1 class="text-5xl md:text-6xl mb-6 text-rose-600 readable-font">Haii Amii!!</h1>
+      <p class="text-gray-600 max-w-md text-lg leading-relaxed">
+        This is something that I wanted to share with you<br>
+        With the help of AI, I hope you'll like this :D
+      </p>
+      <div class="mt-12 animate-bounce text-gray-400">
+        ↓
+      </div>
+    </section>
+
+    <!-- Bagian 2: Timeline -->
+    <section class="min-h-screen flex items-center justify-center px-6 py-20 relative z-10">
+      <div class="fade text-center w-full max-w-2xl">
+          
+          <h2 class="text-3xl md:text-4xl mb-8 text-gray-700 readable-font">
+            Udah selama ini yah kita kenal semenjak rekaman BEM pas 19 November
+          </h2>
+
+          <div class="flex flex-wrap justify-center gap-3 mb-12">
+              <div class="time-box"><div id="k-hari" class="time-number">0</div><span class="time-label">hari</span></div>
+              <div class="time-box"><div id="k-jam" class="time-number">0</div><span class="time-label">jam</span></div>
+              <div class="time-box"><div id="k-menit" class="time-number">0</div><span class="time-label">menit</span></div>
+              <div class="time-box"><div id="k-detik" class="time-number">0</div><span class="time-label">detik</span></div>
+          </div>
+
+          <h2 class="text-3xl md:text-4xl mb-8 text-gray-700 readable-font">
+            Dan...udah selama ini dari aku pertama kali DM pas 30 November hehe
+          </h2>
+
+          <div class="flex flex-wrap justify-center gap-3">
+              <div class="time-box"><div id="p-hari" class="time-number">0</div><span class="time-label">hari</span></div>
+              <div class="time-box"><div id="p-jam" class="time-number">0</div><span class="time-label">jam</span></div>
+              <div class="time-box"><div id="p-menit" class="time-number">0</div><span class="time-label">menit</span></div>
+              <div class="time-box"><div id="p-detik" class="time-number">0</div><span class="time-label">detik</span></div>
+          </div>
+
+      </div>
+    </section>
+
+    <!-- Memory sections -->
+    <section class="min-h-screen flex items-center justify-center px-6 relative z-10">
+      <div class="fade max-w-md text-center bg-white/40 p-6 rounded-3xl backdrop-blur-sm border border-white/60 shadow-xl">
+        <img src="memory1.jpeg" 
+             onerror="this.src='https://placehold.co/600x400/pink/white?text=Our+Memory+1'"
+             class="rounded-2xl shadow-md mb-6 w-full object-cover h-64 hover:scale-105 transition duration-500"
+             alt="Memory 1">
+        <p class="text-lg text-gray-700 font-medium">
+          Honestly, it all started from this sih WKWK. Aku bersyukur banget bahwa aku bisa memberanikan diri buat ngechat kamu dan bahkan kamu respon!!. Yeyy.
+        </p>
+      </div>
+    </section>
+
+    <section class="min-h-screen flex items-center justify-center px-6 relative z-10">
+      <div class="fade max-w-md text-center bg-white/40 p-6 rounded-3xl backdrop-blur-sm border border-white/60 shadow-xl">
+         <img src="memory2.jpeg" 
+             onerror="this.src='https://placehold.co/600x400/pink/white?text=Our+Memory+2'"
+             class="rounded-2xl shadow-md mb-6 w-full object-cover h-104 hover:scale-105 transition duration-500"
+             alt="Memory 2">
+        <p class="text-lg text-gray-700 font-medium">
+          Tanya - tanya moment, kan ga lucu kalo aku deketin kamu eh ternyata ber pawang :D
+        </p>
+      </div>
+    </section>
+
+    <section class="min-h-screen flex items-center justify-center px-6 relative z-10">
+      <div class="fade max-w-md text-center bg-white/40 p-6 rounded-3xl backdrop-blur-sm border border-white/60 shadow-xl">
+         <img src="memory3.jpeg" 
+             onerror="this.src='https://placehold.co/600x400/pink/white?text=Our+Memory+3'"
+             class="rounded-2xl shadow-md mb-6 w-full object-cover h-64 hover:scale-105 transition duration-500"
+             alt="Memory 3">
+        <p class="text-lg text-gray-700 font-medium">
+          And without really noticing it, you became someone important to me.
+        </p>
+      </div>
+    </section>
+
+    <section class="min-h-screen flex items-center justify-center px-6 relative z-10">
+      <div class="fade max-w-md text-center bg-white/40 p-6 rounded-3xl backdrop-blur-sm border border-white/60 shadow-xl">
+         <img src="memory4.jpeg" 
+             onerror="this.src='https://placehold.co/600x400/pink/white?text=Our+Memory+4'"
+             class="rounded-2xl shadow-md mb-6 w-full object-cover h-64 hover:scale-105 transition duration-500"
+             alt="Memory 4">
+        <p class="text-lg text-gray-700 font-medium">
+          (Isi caption Memory 4 kamu di sini yaaa...)
+        </p>
+      </div>
+    </section>
+
+    <section class="min-h-screen flex items-center justify-center px-6 relative z-10">
+      <div class="fade max-w-md text-center bg-white/40 p-6 rounded-3xl backdrop-blur-sm border border-white/60 shadow-xl">
+         <img src="memory5.jpeg" 
+             onerror="this.src='https://placehold.co/600x400/pink/white?text=Our+Memory+5'"
+             class="rounded-2xl shadow-md mb-6 w-full object-cover h-64 hover:scale-105 transition duration-500"
+             alt="Memory 5">
+        <p class="text-lg text-gray-700 font-medium">
+          (Isi caption Memory 5 kamu di sini yaaa...)
+        </p>
+      </div>
+    </section>
+
+    <section class="min-h-screen flex items-center justify-center px-6 relative z-10">
+      <div class="fade max-w-md text-center bg-white/40 p-6 rounded-3xl backdrop-blur-sm border border-white/60 shadow-xl">
+         <img src="memory6.jpeg" 
+             onerror="this.src='https://placehold.co/600x400/pink/white?text=Our+Memory+6'"
+             class="rounded-2xl shadow-md mb-6 w-full object-cover h-64 hover:scale-105 transition duration-500"
+             alt="Memory 6">
+        <p class="text-lg text-gray-700 font-medium">
+          (Isi caption Memory 6 kamu di sini yaaa...)
+        </p>
+      </div>
+    </section>
+
+    <section class="min-h-screen flex items-center justify-center px-6 relative z-10">
+      <div class="fade max-w-md text-center bg-white/40 p-6 rounded-3xl backdrop-blur-sm border border-white/60 shadow-xl">
+         <img src="memory7.jpeg" 
+             onerror="this.src='https://placehold.co/600x400/pink/white?text=Our+Memory+7'"
+             class="rounded-2xl shadow-md mb-6 w-full object-cover h-64 hover:scale-105 transition duration-500"
+             alt="Memory 7">
+        <p class="text-lg text-gray-700 font-medium">
+          (Isi caption Memory 7 kamu di sini yaaa...)
+        </p>
+      </div>
+    </section>
+
+    <section class="min-h-screen flex items-center justify-center px-6 relative z-10">
+      <div class="fade max-w-md text-center bg-white/40 p-6 rounded-3xl backdrop-blur-sm border border-white/60 shadow-xl">
+         <img src="memory8.jpeg" 
+             onerror="this.src='https://placehold.co/600x400/pink/white?text=Our+Memory+8'"
+             class="rounded-2xl shadow-md mb-6 w-full object-cover h-64 hover:scale-105 transition duration-500"
+             alt="Memory 8">
+        <p class="text-lg text-gray-700 font-medium">
+          (Isi caption Memory 8 kamu di sini yaaa...)
+        </p>
+      </div>
+    </section>
+
+    <section class="min-h-screen flex items-center justify-center px-6 relative z-10">
+      <div class="fade max-w-md text-center bg-white/40 p-6 rounded-3xl backdrop-blur-sm border border-white/60 shadow-xl">
+         <img src="memory9.jpeg" 
+             onerror="this.src='https://placehold.co/600x400/pink/white?text=Our+Memory+9'"
+             class="rounded-2xl shadow-md mb-6 w-full object-cover h-64 hover:scale-105 transition duration-500"
+             alt="Memory 9">
+        <p class="text-lg text-gray-700 font-medium">
+          (Isi caption Memory 9 kamu di sini yaaa...)
+        </p>
+      </div>
+    </section>
+
+    <section class="min-h-screen flex items-center justify-center px-6 relative z-10">
+      <div class="fade max-w-md text-center bg-white/40 p-6 rounded-3xl backdrop-blur-sm border border-white/60 shadow-xl">
+         <img src="memory10.jpeg" 
+             onerror="this.src='https://placehold.co/600x400/pink/white?text=Our+Memory+10'"
+             class="rounded-2xl shadow-md mb-6 w-full object-cover h-64 hover:scale-105 transition duration-500"
+             alt="Memory 10">
+        <p class="text-lg text-gray-700 font-medium">
+          (Isi caption Memory 10 kamu di sini yaaa...)
+        </p>
+      </div>
+    </section>
+
+    <!-- Proposal section -->
+    <section class="min-h-screen flex flex-col items-center justify-center text-center px-6 relative z-10">
+      <div class="fade p-8 bg-white/50 backdrop-blur-md rounded-3xl shadow-2xl border border-white">
+        <h2 class="text-4xl md:text-5xl mb-8 text-rose-600">
+          Would you like to be my girlfriend?
+        </h2>
+
+        <div class="flex flex-col md:flex-row gap-4 justify-center items-center">
+          <button onclick="window.yesAnswer()"
+            class="w-40 px-6 py-4 bg-rose-500 text-white font-semibold rounded-full shadow-lg hover:bg-rose-600 hover:scale-110 transition duration-300 transform">
+            Yes 💖
+          </button>
+
+          <button onclick="window.talkAnswer()"
+            class="w-40 px-6 py-4 bg-white text-gray-600 font-semibold rounded-full shadow-md hover:bg-gray-100 transition duration-300">
+            Gak dulu
+          </button>
+        </div>
+
+        <p id="response" class="mt-8 text-xl font-semibold text-rose-600 min-h-[2rem]"></p>
+      </div>
+    </section>
+  </div>
+
+  <!-- Floating Fun Button (only visible after quiz) -->
+  <button class="floating-fun-btn" id="funButton" style="display: none;" onclick="window.funConfetti()">
+    ✨
+  </button>
+  <div class="floating-text" id="funText" style="display: none;">
+    Click for fun! 🎉
+  </div>
+
+  <script>
+    // Make all functions globally available by attaching to window
+    (function() {
+      // QUIZ LOGIC
+      let currentQuestion = 1;
+      let answers = {
+        1: '',
+        2: '',
+        3: ''
+      };
+      
+      // Correct answers
+      const correctAnswers = {
+        1: 'C', // Ami
+        2: 'A', // Matek
+        3: 'C'  // 19 November
+      };
+      
+      // Global functions
+      window.selectAnswer = function(questionNum, answer) {
+        answers[questionNum] = answer;
+        
+        // Remove selected class from all options in this question
+        for (let i = 0; i < 4; i++) {
+          const opt = document.getElementById(`q${questionNum}${String.fromCharCode(65 + i)}`);
+          if (opt) {
+            opt.classList.remove('selected');
+          }
+        }
+        
+        // Add selected class to chosen option
+        document.getElementById(`q${questionNum}${answer}`).classList.add('selected');
+        
+        // Enable next button if current question is answered
+        if (currentQuestion < 3) {
+          document.getElementById('nextBtn').disabled = false;
+        } else {
+          // On last question, check if all questions are answered
+          if (answers[1] && answers[2] && answers[3]) {
+            document.getElementById('nextBtn').disabled = false;
+            document.getElementById('nextBtn').textContent = 'Selesai ✨';
+          }
+        }
+        
+        // Clear error
+        document.getElementById('quizError').textContent = '';
+      };
+      
+      window.nextQuestion = function() {
+        if (currentQuestion < 3) {
+          // Check if current question is answered
+          if (!answers[currentQuestion]) {
+            document.getElementById('quizError').textContent = 'Pilih jawaban dulu yaa~';
+            return;
+          }
+          
+          // Hide current question
+          document.getElementById(`question${currentQuestion}`).style.display = 'none';
+          
+          // Update progress indicator
+          document.getElementById(`progress${currentQuestion}`).classList.remove('active');
+          document.getElementById(`progress${currentQuestion}`).classList.add('completed');
+          
+          // Move to next question
+          currentQuestion++;
+          document.getElementById(`question${currentQuestion}`).style.display = 'block';
+          document.getElementById(`progress${currentQuestion}`).classList.add('active');
+          
+          // Show prev button
+          document.getElementById('prevBtn').style.display = 'block';
+          
+          // Disable next button until answer is selected
+          document.getElementById('nextBtn').disabled = true;
+          
+          // Update next button text if on last question
+          if (currentQuestion === 3) {
+            document.getElementById('nextBtn').textContent = 'Selesai ✨';
+          }
+        } else {
+          // Submit quiz
+          submitQuiz();
+        }
+      };
+      
+      window.prevQuestion = function() {
+        if (currentQuestion > 1) {
+          // Hide current question
+          document.getElementById(`question${currentQuestion}`).style.display = 'none';
+          
+          // Update progress indicator
+          document.getElementById(`progress${currentQuestion}`).classList.remove('active');
+          if (answers[currentQuestion]) {
+            document.getElementById(`progress${currentQuestion}`).classList.add('completed');
+          }
+          
+          // Move to previous question
+          currentQuestion--;
+          document.getElementById(`question${currentQuestion}`).style.display = 'block';
+          document.getElementById(`progress${currentQuestion}`).classList.remove('completed');
+          document.getElementById(`progress${currentQuestion}`).classList.add('active');
+          
+          // Update next button text
+          document.getElementById('nextBtn').textContent = 'Next';
+          
+          // Enable/disable next button based on answer
+          document.getElementById('nextBtn').disabled = !answers[currentQuestion];
+          
+          // Hide prev button if on first question
+          if (currentQuestion === 1) {
+            document.getElementById('prevBtn').style.display = 'none';
+          }
+        }
+      };
+      
+      function submitQuiz() {
+        // Check if all questions are answered
+        if (!answers[1] || !answers[2] || !answers[3]) {
+          document.getElementById('quizError').textContent = 'Jawab semua pertanyaan dulu yaa~';
+          return;
+        }
+        
+        // Check answers
+        const isCorrect = 
+          answers[1] === correctAnswers[1] &&
+          answers[2] === correctAnswers[2] &&
+          answers[3] === correctAnswers[3];
+        
+        if (isCorrect) {
+          // Success!
+          document.getElementById('quizSuccess').textContent = '✅ Selamat! Kamu benar semua! 💕';
+          document.getElementById('quizError').textContent = '';
+          
+          // Show correct answers in green
+          for (let q = 1; q <= 3; q++) {
+            const correctAns = correctAnswers[q];
+            document.getElementById(`q${q}${correctAns}`).classList.add('correct');
+          }
+          
+          // Small confetti celebration
+          confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#ec4899', '#f472b6', '#fbb6ce']
+          });
+          
+          // Hide quiz after a short delay
+          setTimeout(() => {
+            document.getElementById('quizContainer').classList.add('hidden');
+            
+            // Show main content
+            document.getElementById('mainContent').style.display = 'block';
+            document.getElementById('funButton').style.display = 'flex';
+            document.getElementById('funText').style.display = 'block';
+            
+            // Initialize all the main page functions
+            initializeMainPage();
+            
+            // Big confetti celebration
+            setTimeout(() => {
+              confetti({
+                particleCount: 150,
+                spread: 100,
+                origin: { y: 0.6 }
+              });
+            }, 500);
+            
+          }, 1500);
+          
+        } else {
+          // Wrong answers
+          document.getElementById('quizError').textContent = '❌ Ada yang salah nih... Coba cek lagi jawabannya!';
+          document.getElementById('quizSuccess').textContent = '';
+          
+          // Shake animation
+          document.querySelector('.quiz-card').style.animation = 'none';
+          setTimeout(() => {
+            document.querySelector('.quiz-card').style.animation = 'quizPop 0.5s ease';
+          }, 10);
+          
+          // Show which answers were wrong
+          for (let q = 1; q <= 3; q++) {
+            if (answers[q] !== correctAnswers[q]) {
+              // Wrong answer
+              document.getElementById(`q${q}${answers[q]}`).classList.add('wrong');
+              
+              // Remove wrong class after 2 seconds
+              setTimeout(() => {
+                document.getElementById(`q${q}${answers[q]}`).classList.remove('wrong');
+              }, 2000);
+            }
+          }
+        }
+      }
+
+      // MAIN PAGE FUNCTIONS
+      function initializeMainPage() {
+        // 1. Fade Animation Logic
+        const faders = document.querySelectorAll('.fade');
+        const observer = new IntersectionObserver(entries => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('show');
+            }
+          });
+        }, { threshold: 0.1 });
+        faders.forEach(el => observer.observe(el));
+
+        // 2. Timer Logic
+        function updateBoxTimer(startDate, prefix) {
+            const now = new Date();
+            let diff = now - startDate;
+            
+            if (diff < 0) diff = 0;
+
+            const detik = Math.floor(diff / 1000) % 60;
+            const menit = Math.floor(diff / (1000 * 60)) % 60;
+            const jam   = Math.floor(diff / (1000 * 60 * 60)) % 24;
+            const hari  = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+            document.getElementById(prefix + "-hari").textContent  = hari;
+            document.getElementById(prefix + "-jam").textContent   = String(jam).padStart(2, "0");
+            document.getElementById(prefix + "-menit").textContent = String(menit).padStart(2, "0");
+            document.getElementById(prefix + "-detik").textContent = String(detik).padStart(2, "0");
+        }
+
+        const kenalDate = new Date("2025-11-19T16:00:00"); 
+        const pdktDate  = new Date("2025-11-30T09:47:00");
+
+        setInterval(() => {
+            updateBoxTimer(kenalDate, "k");
+            updateBoxTimer(pdktDate, "p");
+        }, 1000);
+
+        // 3. Background Floating Hearts Generator
+        function createHearts() {
+          const container = document.getElementById('hearts-bg');
+          const heartCount = 15;
+          for (let i = 0; i < heartCount; i++) {
+            const heart = document.createElement('div');
+            heart.classList.add('heart');
+            heart.innerHTML = ['❤️', '🌷', '🌸', '✨'][Math.floor(Math.random() * 4)];
+            heart.style.left = Math.random() * 100 + 'vw';
+            heart.style.animationDuration = Math.random() * 5 + 5 + 's';
+            heart.style.animationDelay = Math.random() * 5 + 's';
+            container.appendChild(heart);
+          }
+        }
+        createHearts();
+      }
+
+      // Button functions
+      window.yesAnswer = function() {
+        const response = document.getElementById("response");
+        response.textContent = "You just made me really happy 🌷";
+        
+        var duration = 3 * 1000;
+        var animationEnd = Date.now() + duration;
+        var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+        function randomInRange(min, max) {
+          return Math.random() * (max - min) + min;
+        }
+
+        var interval = setInterval(function() {
+          var timeLeft = animationEnd - Date.now();
+
+          if (timeLeft <= 0) {
+            return clearInterval(interval);
+          }
+
+          var particleCount = 50 * (timeLeft / duration);
+          confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+          confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+        }, 250);
+      };
+
+      window.talkAnswer = function() {
+        document.getElementById("response").textContent = "That's completely okay. We can talk whenever you want 🤍";
+      };
+
+      window.funConfetti = function() {
+        const confettiTypes = ['circle', 'star', 'heart', 'emoji'];
+        const selectedType = confettiTypes[Math.floor(Math.random() * confettiTypes.length)];
+        
+        switch(selectedType) {
+          case 'heart':
+            confetti({
+              particleCount: 150,
+              spread: 100,
+              origin: { y: 0.6 },
+              shapes: ['heart'],
+              colors: ['#ec4899', '#db2777', '#f472b6', '#f9a8d4']
+            });
+            break;
+            
+          case 'star':
+            confetti({
+              particleCount: 100,
+              spread: 70,
+              origin: { y: 0.6 },
+              shapes: ['star'],
+              colors: ['#fbbf24', '#f59e0b', '#fcd34d']
+            });
+            break;
+            
+          case 'emoji':
+            for(let i = 0; i < 3; i++) {
+              setTimeout(() => {
+                confetti({
+                  particleCount: 30,
+                  spread: 360,
+                  origin: { 
+                    x: Math.random(),
+                    y: Math.random() * 0.5
+                  },
+                  shapes: ['circle'],
+                  scalar: 1.5,
+                  colors: ['#FFD700', '#FF69B4', '#87CEEB']
+                });
+              }, i * 200);
+            }
+            break;
+            
+          default:
+            confetti({
+              particleCount: 150,
+              spread: 100,
+              origin: { y: 0.6 }
+            });
+            
+            setTimeout(() => {
+              confetti({
+                particleCount: 50,
+                angle: 60,
+                spread: 55,
+                origin: { x: 0 }
+              });
+              
+              confetti({
+                particleCount: 50,
+                angle: 120,
+                spread: 55,
+                origin: { x: 1 }
+              });
+            }, 250);
+        }
+        
+        try {
+          const audio = new Audio('https://assets.mixkit.co/sfx/preview/mixkit-party-horn-sound-2927.mp3');
+          audio.volume = 0.3;
+          audio.play().catch(e => {});
+        } catch(e) {
+          // Sound failed, no problem
+        }
+      };
+    })();
+  </script>
+</body>
+</html>
